@@ -1,34 +1,46 @@
 import requests
-import xmltodict
+from bs4 import BeautifulSoup
 from tkinter import *
 import tkinter as tk
 
 # Создаем окно верхнего уровня
 window = Tk()
 window.geometry("400x100")
-window.title('Раздел примеров сайта библиотеки Seaborn')
+window.title('Раздела примеров сайта библиотеки Seaborn')
 
 # Добавление кнопки закрытия окна
 btnClosePopup = tk.Button(window, text="Закрыть", bg='#990000', fg='white', font=('Helvetica', 10, 'bold'), command=window.destroy)
 btnClosePopup.place(x=280, y=50, width=110, height=30)
 
-# Парсинг данных с cbr.ru
-url = "http://www.cbr.ru/scripts/XML_val.asp"
+# Парсим html данные 
+url = "https://seaborn.pydata.org/examples/index.html"
 response = requests.get(url)
-data = xmltodict.parse(response.content)
 
+# Отображаем html данные в читаемый вид
+soup = BeautifulSoup(response.content, 'html.parser')
+#~print(soup)
+#~print(soup.prettify())
+
+# Поиск необходимых данных 
+lst = soup.find_all('p')
 
 # Обработчик нажатия кнопки
 def process_button():
-    my_array = []
-    for item in data['Valuta']['Item']:
-        my_set = [item['Name'], item['EngName'], item['Nominal'], item['ParentCode']]
-        my_array.append(my_set)
-        print(my_set)
-    popup_window(my_array)
+    for item in lst:
+        print(clean_item(str(item)))
+        
+    popup_window(lst)
 
+    
+# Функция удаления лишних элементов из списка
+def clean_item(my_item):
+    position = my_item.find('</p')
+    return my_item[3:position]
 
-def popup_window(my_array):
+#~print("")
+
+# Запрос отображения списка
+def popup_window(lst):
     window = tk.Toplevel()
     window.geometry("500x500")
     window.title("Результат")
@@ -37,13 +49,10 @@ def popup_window(my_array):
     txtOutput = tk.Text(window, font=('Courier New', 10, 'bold'))
     txtOutput.place(x=15, y=115, width=470, height=300)
 
-    # Сформировать строку с данными
+     # Сформировать строку с данными
     output_str = ""
-    for item in my_array:
-        output_str += f"Name: {item[0]}\n"
-        output_str += f"EngName: {item[1]}\n"
-        output_str += f"Nominal: {item[2]}\n"
-        output_str += f"ParentCode: {item[3]}\n\n"
+    for item in lst:
+        output_str += clean_item(str(item)) + "\n"
 
     # Вывод строки в окне
     txtOutput.insert(END, output_str)
@@ -54,6 +63,3 @@ button = tk.Button(window, text="Парсинг данных", font=('Helvetica'
 button.place(x=10, y=50, width=110, height=30)
 
 window.mainloop()
-
-
-
